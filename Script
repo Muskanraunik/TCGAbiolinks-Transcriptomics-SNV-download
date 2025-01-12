@@ -1,0 +1,36 @@
+library(SummarizedExperiment)
+library(tidyverse)
+library(maftools)
+library(TCGAbiolinks)
+gdcprojects <- getGDCprojects()
+getProjectSummary("TCGA-BRCA")
+query_TCGA <- GDCquery(project = "TCGA-BRCA")
+output_query_tcga <- getResults(query_TCGA)
+View(query_TCGA[[1]][[1]])
+write.csv(query_TCGA[[1]][[1]], file = "tcga_full_brca.csv", row.names = TRUE)
+barcodes <- read.csv("tcga_sample_id.csv", header = TRUE)
+barcodes_id <- barcodes$tcga_id
+head(barcodes)
+query_TCGA <- GDCquery(project = "TCGA-BRCA",
+                       data.category = "Transcriptome Profiling",
+                       experimental.strategy = "miRNA-Seq",
+                       access = "open",
+                       data.format = "TXT",
+                       data.type = "miRNA Expression Quantification",
+                       barcode = barcodes_id)
+c <- getResults(query_TCGA)
+GDCdownload(query_TCGA)
+
+query_mutation <- GDCquery(project = "TCGA-BRCA",
+                           data.category = "Simple Nucleotide Variation",
+                           access = "open",
+                           data.type = "Masked Somatic Mutation")
+c <- getResults(query_mutation)
+mutation_data <- GDCprepare(query_mutation)
+GDCdownload(query_mutation, directory = "GDCdata")
+mutation_data <- GDCprepare(query_mutation, directory = "GDCdata")
+list.files("GDCdata")
+mutation.df <- as.data.frame(mutation_data)
+brca2_mutation <- subset(mutation.df, Hugo_Symbol == "BRCA2")
+head(brca2_mutation)
+write.csv(brca2_mutation, file = brca2_mutation.csv, row.names = TRUE)
